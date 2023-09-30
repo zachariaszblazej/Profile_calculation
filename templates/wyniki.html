@@ -1,10 +1,67 @@
 {% extends "base.html" %}
 
+{% block zlecenie %}
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc1" name="dlugosc1" value="{% if ilosc_pairs > 0 %}{{pairs[0][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka1" name="sztuka1" value="{% if ilosc_pairs > 0 %}{{pairs[0][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc2" name="dlugosc2" value="{% if ilosc_pairs > 1 %}{{pairs[1][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka2" name="sztuka2" value="{% if ilosc_pairs > 1 %}{{pairs[1][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc3" name="dlugosc3" value= "{% if ilosc_pairs > 2 %}{{pairs[2][0]}} {% endif %}" >
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka3" name="sztuka3" value="{% if ilosc_pairs > 2 %}{{pairs[2][1]}} {% endif %}"> <br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc4" name="dlugosc4" value="{% if ilosc_pairs > 3 %}{{pairs[3][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka4" name="sztuka4" value="{% if ilosc_pairs > 3 %}{{pairs[3][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc5" name="dlugosc5" value="{% if ilosc_pairs > 4 %}{{pairs[4][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka5" name="sztuka5" value="{% if ilosc_pairs > 4 %}{{pairs[4][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc6" name="dlugosc6" value="{% if ilosc_pairs > 5 %}{{pairs[5][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka6" name="sztuka6" value="{% if ilosc_pairs > 5 %}{{pairs[5][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc7" name="dlugosc7" value="{% if ilosc_pairs > 6 %}{{pairs[6][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka7" name="sztuka7" value="{% if ilosc_pairs > 6 %}{{pairs[6][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc8" name="dlugosc8" value="{% if ilosc_pairs > 7 %}{{pairs[7][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka8" name="sztuka8" value="{% if ilosc_pairs > 7 %}{{pairs[7][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc9" name="dlugosc9" value="{% if ilosc_pairs > 8 %}{{pairs[8][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka9" name="sztuka9" value="{% if ilosc_pairs > 8 %}{{pairs[8][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc10" name="dlugosc10" value="{% if ilosc_pairs > 9 %}{{pairs[9][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka10" name="sztuka10" value="{% if ilosc_pairs > 9 %}{{pairs[9][1]}} {% endif %}"><br><br>
+
+    <label>Długość [mm]</label>
+    <input size="1" type="text", id="dlugosc11" name="dlugosc11" value="{% if ilosc_pairs > 10 %}{{pairs[10][0]}} {% endif %}">
+    <label>Ilość sztuk</label>
+    <input size="1" type="text", id="sztuka11" name="sztuka11" value="{% if ilosc_pairs > 10 %}{{pairs[10][1]}} {% endif %}"><br><br>
+{% endblock %}
+
 {% block result %}
     <br><br>
-    <label>Wyniki dla profili o długości {{profil}} mm, granicy {{granica}} mm. Każde cięcie zabiera {{zapas}} mm materiału.</label><br><br>
+    <label>Wyniki dla profili o długości {{profil}} mm, granicy {{granica}} mm. Każde cięcie zabiera {{zapas}} mm materiału.</label><br>
 
-    <label>Zlecenie:</label><br><br>
+    <label>Zlecenie:</label>
     {% for dlugosc, sztuka in pairs %}
         <label> {{sztuka}} x {{dlugosc}} mm&ensp;&ensp;</label>
     {% endfor %}
@@ -19,7 +76,7 @@
         <br>
     {% endfor %}
 
-    <br><br>
+    <br>
     Profile dla firmy:<br>
     {% for profil in profile_dla_firmy %}
         <label>{{loop.index}})</label>

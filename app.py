@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return render_template("base.html")
+    return render_template("home.html")
 
 @app.route('/licz_profile', methods=['GET', 'POST'])
 def licz_profile():
@@ -34,8 +34,10 @@ def licz_profile():
         sztuki = [sztuka for _, sztuka in pairs]
 
         profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci, sztuki, profil, granica, zapas)
+
+        ilosc_pairs = len(pairs)
             
-        return render_template('wyniki.html', zapas=zapas, granica=granica, profil=profil, pairs=pairs, profile_dla_dostawcy=profile_dla_dostawcy, profile_dla_firmy=profile_dla_firmy)
+        return render_template('wyniki.html', zapas=zapas, granica=granica, profil=profil, pairs=pairs, ilosc_pairs=ilosc_pairs, profile_dla_dostawcy=profile_dla_dostawcy, profile_dla_firmy=profile_dla_firmy)
 
 def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=4000, ZAPAS=20):
     dlugosci = [x + ZAPAS for x in dlugosci]
