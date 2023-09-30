@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block result %}
+    <br><br>
+    <label>Wyniki dla profili o długości {{profil}} mm, granicy {{granica}} mm. Każde cięcie zabiera {{zapas}} mm materiału.</label><br><br>
+
+    <label>Zlecenie:</label><br><br>
+    {% for dlugosc, sztuka in pairs %}
+        <label> {{sztuka}} x {{dlugosc}} mm&ensp;&ensp;</label>
+    {% endfor %}
+
+    <br><br>
+    Profile dla dostawcy:<br>
+    {% for profil in profile_dla_dostawcy %}
+        <label>{{loop.index}})</label>
+        {% for segment in profil %}
+        <label>{{segment}},</label>
+        {% endfor %}
+        <br>
+    {% endfor %}
+
+    <br><br>
+    Profile dla firmy:<br>
+    {% for profil in profile_dla_firmy %}
+        <label>{{loop.index}})</label>
+        <label>Segmenty</label>
+        {% for segment in profil['segmenty'] %}
+        <label>{{segment}},</label>
+        {% endfor %}
+        <label>Reszta</label>
+        <label>{{profil['reszta']}}</label>
+        <br>
+    {% endfor %}
+
+{% endblock %}
