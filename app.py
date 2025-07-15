@@ -10,8 +10,6 @@ def home():
 @app.route('/licz_profile', methods=['GET', 'POST'])
 def licz_profile():
     if request.method == 'POST':
-        zapas = int(request.form['zapas'])
-        granica = int(request.form['granica'])
         profil= int(request.form['profil'])
 
         pairs = []
@@ -33,14 +31,14 @@ def licz_profile():
         dlugosci = [dlugosc for dlugosc, _ in pairs]
         sztuki = [sztuka for _, sztuka in pairs]
 
-        profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci, sztuki, profil, granica, zapas)
+        profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci, sztuki, profil, profil)
 
         ilosc_pairs = len(pairs)
             
-        return render_template('wyniki.html', zapas=zapas, granica=granica, profil=profil, pairs=pairs, ilosc_pairs=ilosc_pairs, profile_dla_dostawcy=profile_dla_dostawcy, profile_dla_firmy=profile_dla_firmy)
+        return render_template('wyniki.html', profil=profil, pairs=pairs, ilosc_pairs=ilosc_pairs, profile_dla_dostawcy=profile_dla_dostawcy, profile_dla_firmy=profile_dla_firmy)
 
-def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=4000, ZAPAS=20):
-    dlugosci = [x + ZAPAS for x in dlugosci]
+def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000):
+    dlugosci = [x for x in dlugosci]
 
     pociete_segmenty = []
 
