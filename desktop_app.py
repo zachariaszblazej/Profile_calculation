@@ -2,8 +2,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 import os
+import sys
 
-BACKGROUND_IMAGE_PATH = os.path.join(os.path.dirname(__file__), 'background_image.jpeg')
+# Ustal ścieżkę bazową. W trybie PyInstaller (exe) pliki danych znajdują się w katalogu sys._MEIPASS.
+_BASE_PATH = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+BACKGROUND_IMAGE_PATH = os.path.join(_BASE_PATH, 'background_image.jpeg')
 
 
 def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):

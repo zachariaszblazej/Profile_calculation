@@ -30,9 +30,9 @@ jobs:
         run: |
           pip install pyinstaller
 
-      - name: Build exe with PyInstaller
+      - name: Build exe with PyInstaller (bundle background image)
         run: |
-          pyinstaller --onefile --noconsole --name Profile_calculation desktop_app.py
+          pyinstaller --onefile --noconsole --name Profile_calculation --add-data "background_image.jpeg;." desktop_app.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
