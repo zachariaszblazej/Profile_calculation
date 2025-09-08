@@ -2,10 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
-import tkinter as tk
-from tkinter import ttk, messagebox
-from tkinter.scrolledtext import ScrolledText
-
 
 def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
     dlugosci = [x + ZAPAS for x in dlugosci]
@@ -188,7 +184,9 @@ class ProfileCutterApp:
             messagebox.showinfo('Brak', 'Brak danych do obliczeń')
             return
 
-        profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci, sztuki, profil, profil, zapas)
+        # Uwaga: generuj_profile mutuje przekazane listy (usuwa elementy),
+        # dlatego przekazujemy kopie aby zachować oryginalne do wyświetlenia w sekcji "Zlecenie".
+        profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci.copy(), sztuki.copy(), profil, profil, zapas)
 
         self.output.delete('1.0', tk.END)
         self.output.insert(tk.END, f'Wyniki dla profili o długości {profil} mm\n\nKażde cięcie zabiera {zapas} mm materiału.\n\n')
@@ -218,4 +216,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    root = tk.Tk()
