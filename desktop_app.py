@@ -195,9 +195,6 @@ class ProfileCutterApp:
         self.output.insert(tk.END, 'Zlecenie:\n')
         for d, s in zip(dlugosci, sztuki):
             self.output.insert(tk.END, f'  {s} x {d} mm\n')
-        self.output.insert(tk.END, '\nProfile dla dostawcy:\n')
-        for idx, p in enumerate(profile_dla_dostawcy, start=1):
-            self.output.insert(tk.END, f'  {idx}) ' + ', '.join(str(x) for x in p) + '\n')
 
         self.output.insert(tk.END, '\nProfile dla firmy:\n')
         for idx, p in enumerate(profile_dla_firmy, start=1):
