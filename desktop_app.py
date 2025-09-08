@@ -196,7 +196,9 @@ class ProfileCutterApp:
 
         self.output.insert(tk.END, '\nProfile dla firmy:\n')
         for idx, p in enumerate(profile_dla_firmy, start=1):
-            segs = ', '.join(str(x) for x in p['segmenty'])
+            # W wyjściu pokazujemy oryginalne długości (bez dodanego zapasu),
+            # bo zapas jest już opisany tekstowo powyżej.
+            segs = ', '.join(str(x - zapas) for x in p['segmenty']) if zapas else ', '.join(str(x) for x in p['segmenty'])
             res = p['reszta']
             self.output.insert(tk.END, f'  {idx}) Segmenty: {segs} | Reszta: {res}\n')
 
