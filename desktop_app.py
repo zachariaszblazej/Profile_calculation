@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
+import os
+
+BACKGROUND_IMAGE_PATH = os.path.join(os.path.dirname(__file__), 'background_image.jpeg')
 
 
 def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
@@ -115,42 +118,92 @@ class ProfileCutterApp:
     def __init__(self, root):
         self.root = root
         root.title('Tnij profile - aplikacja desktop')
+        # Try to load background image (optional)
+        self._bg_image = None
+        self._bg_orig = None
+        self._bg_label = None
+        if os.path.exists(BACKGROUND_IMAGE_PATH):
+            try:
+                from PIL import Image, ImageTk
+                self._bg_orig = Image.open(BACKGROUND_IMAGE_PATH)
+                self._bg_image = ImageTk.PhotoImage(self._bg_orig)
+                self._bg_label = tk.Label(root, image=self._bg_image)
+                self._bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+                root.bind('<Configure>', self._on_resize_bg)
+            except Exception:
+                try:
+                    # Fallback (works only for GIF/PNG)
+                    self._bg_image = tk.PhotoImage(file=BACKGROUND_IMAGE_PATH)
+                    self._bg_label = tk.Label(root, image=self._bg_image)
+                    self._bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+                except Exception:
+                    pass  # no background
 
-        mainframe = ttk.Frame(root, padding='10')
-        mainframe.grid(row=0, column=0, sticky='nsew')
-
-        ttk.Label(mainframe, text='Nowy profil [mm]:').grid(row=0, column=0, sticky='w')
+        # Input widgets
+        pad_y = 2
+        ttk.Label(root, text='Nowy profil [mm]:').grid(row=0, column=0, sticky='w', padx=10, pady=pad_y)
         self.profil_var = tk.StringVar(value='6000')
-        self.profil_entry = ttk.Entry(mainframe, textvariable=self.profil_var, width=10)
-        self.profil_entry.grid(row=0, column=1, sticky='w')
+        self.profil_entry = ttk.Entry(root, textvariable=self.profil_var, width=10)
+        self.profil_entry.grid(row=0, column=1, sticky='w', pady=pad_y)
 
-        ttk.Label(mainframe, text='Zapas [mm]:').grid(row=0, column=2, sticky='w')
+        ttk.Label(root, text='Zapas [mm]:').grid(row=0, column=2, sticky='w', padx=(20, 0), pady=pad_y)
         self.zapas_var = tk.StringVar(value='0')
-        self.zapas_entry = ttk.Entry(mainframe, textvariable=self.zapas_var, width=8)
-        self.zapas_entry.grid(row=0, column=3, sticky='w')
+        self.zapas_entry = ttk.Entry(root, textvariable=self.zapas_var, width=8)
+        self.zapas_entry.grid(row=0, column=3, sticky='w', pady=pad_y)
 
-        # create 11 pairs of inputs
         self.dlugosci_vars = []
         self.sztuki_vars = []
         for i in range(11):
             r = i + 1
-            ttk.Label(mainframe, text=f'Długość {r} [mm]:').grid(row=r, column=0, sticky='w')
+            ttk.Label(root, text=f'Długość {r} [mm]:').grid(row=r, column=0, sticky='w', padx=10, pady=pad_y)
             dv = tk.StringVar()
             sv = tk.StringVar()
             self.dlugosci_vars.append(dv)
             self.sztuki_vars.append(sv)
-            ttk.Entry(mainframe, textvariable=dv, width=8).grid(row=r, column=1, sticky='w')
-            ttk.Label(mainframe, text='Ilość:').grid(row=r, column=2, sticky='w')
-            ttk.Entry(mainframe, textvariable=sv, width=6).grid(row=r, column=3, sticky='w')
+            ttk.Entry(root, textvariable=dv, width=8).grid(row=r, column=1, sticky='w', pady=pad_y)
+            ttk.Label(root, text='Ilość:').grid(row=r, column=2, sticky='w', pady=pad_y)
+            ttk.Entry(root, textvariable=sv, width=6).grid(row=r, column=3, sticky='w', pady=pad_y)
 
-        btn_frame = ttk.Frame(mainframe)
-        btn_frame.grid(row=13, column=0, columnspan=4, pady=(10, 0))
+        self.btn_cut = ttk.Button(root, text='Tnij profile', command=self.compute)
+        self.btn_cut.grid(row=13, column=0, padx=10, pady=(10, 4), sticky='w')
+        self.btn_clear = ttk.Button(root, text='Wyczyść', command=self.clear)
+        self.btn_clear.grid(row=13, column=1, padx=10, pady=(10, 4), sticky='w')
 
-        ttk.Button(btn_frame, text='Tnij profile', command=self.compute).grid(row=0, column=0, padx=5)
-        ttk.Button(btn_frame, text='Wyczyść', command=self.clear).grid(row=0, column=1, padx=5)
+        self.output = ScrolledText(root, width=70, height=18)
+        self.output.grid(row=14, column=0, columnspan=4, padx=10, pady=(10, 10), sticky='nsew')
 
-        self.output = ScrolledText(mainframe, width=70, height=20)
-        self.output.grid(row=14, column=0, columnspan=4, pady=(10, 0))
+        # Grid weight to let text expand
+        root.grid_rowconfigure(14, weight=1)
+        root.grid_columnconfigure(0, weight=1)
+        root.grid_columnconfigure(1, weight=1)
+        root.grid_columnconfigure(2, weight=1)
+        root.grid_columnconfigure(3, weight=1)
+
+        # Ustaw tło (jeśli istnieje) za wszystkimi kontrolkami
+        if hasattr(self, '_bg_label'):
+            try:
+                self._bg_label.lower()
+            except Exception:
+                pass  # ignoruj jeśli środowisko nie wspiera
+
+    # Bind background resize only
+    # (already bound in background loading if Pillow succeeded)
+
+    def _on_resize_bg(self, event):
+        if not self._bg_orig:
+            return
+        try:
+            from PIL import Image, ImageTk
+            w = max(50, event.width)
+            h = max(50, event.height)
+            resized = self._bg_orig.resize((w, h), Image.LANCZOS)
+            self._bg_image = ImageTk.PhotoImage(resized)
+            self._bg_label.configure(image=self._bg_image)
+        except Exception:
+            pass
+
+    # Removed overlay panel logic per user request (overlay deleted)
+
 
     def compute(self):
         try:
@@ -212,6 +265,7 @@ class ProfileCutterApp:
 
 def main():
     root = tk.Tk()
+    # Set a minimum size so background displays nicely
     app = ProfileCutterApp(root)
     root.mainloop()
 
