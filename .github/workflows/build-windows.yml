@@ -28,7 +28,7 @@ jobs:
 
       - name: Build exe with PyInstaller
         run: |
-          pyinstaller --onefile --name Profile_calculation desktop_app.py
+          pyinstaller --onefile --noconsole --name Profile_calculation desktop_app.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
