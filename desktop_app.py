@@ -2,12 +2,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
+import tkinter as tk
+from tkinter import ttk, messagebox
+from tkinter.scrolledtext import ScrolledText
 
-def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000):
-    dlugosci = [x for x in dlugosci]
+
+def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
+    dlugosci = [x + ZAPAS for x in dlugosci]
 
     pociete_segmenty = []
-
     times = len(dlugosci)
 
     for i in range(times):
@@ -125,6 +128,11 @@ class ProfileCutterApp:
         self.profil_entry = ttk.Entry(mainframe, textvariable=self.profil_var, width=10)
         self.profil_entry.grid(row=0, column=1, sticky='w')
 
+        ttk.Label(mainframe, text='Zapas [mm]:').grid(row=0, column=2, sticky='w')
+        self.zapas_var = tk.StringVar(value='0')
+        self.zapas_entry = ttk.Entry(mainframe, textvariable=self.zapas_var, width=8)
+        self.zapas_entry.grid(row=0, column=3, sticky='w')
+
         # create 11 pairs of inputs
         self.dlugosci_vars = []
         self.sztuki_vars = []
@@ -155,6 +163,12 @@ class ProfileCutterApp:
             messagebox.showerror('Błąd', 'Niepoprawna wartość pola Nowy profil')
             return
 
+        try:
+            zapas = int(self.zapas_var.get())
+        except Exception:
+            messagebox.showerror('Błąd', 'Niepoprawna wartość pola Zapas')
+            return
+
         dlugosci = []
         sztuki = []
         for dv, sv in zip(self.dlugosci_vars, self.sztuki_vars):
@@ -174,10 +188,10 @@ class ProfileCutterApp:
             messagebox.showinfo('Brak', 'Brak danych do obliczeń')
             return
 
-        profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci, sztuki, profil, profil)
+        profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci, sztuki, profil, profil, zapas)
 
         self.output.delete('1.0', tk.END)
-        self.output.insert(tk.END, f'Wyniki dla profili o długości {profil} mm\n\n')
+        self.output.insert(tk.END, f'Wyniki dla profili o długości {profil} mm\n\nKażde cięcie zabiera {zapas} mm materiału.\n\n')
         self.output.insert(tk.END, 'Zlecenie:\n')
         for d, s in zip(dlugosci, sztuki):
             self.output.insert(tk.END, f'  {s} x {d} mm\n')
@@ -207,3 +221,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    root = tk.Tk()
