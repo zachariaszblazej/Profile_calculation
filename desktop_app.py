@@ -1,8 +1,11 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from tkinter.scrolledtext import ScrolledText
 import os
 import sys
+import platform
+import tempfile
+import subprocess
 
 # Ustal ścieżkę bazową. W trybie PyInstaller (exe) pliki danych znajdują się w katalogu sys._MEIPASS.
 _BASE_PATH = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -175,6 +178,10 @@ class ProfileCutterApp:
         self.output = ScrolledText(root, width=70, height=18)
         self.output.grid(row=14, column=0, columnspan=4, padx=10, pady=(10, 10), sticky='nsew')
 
+        # Przyciski pod outputem
+        self.btn_print = ttk.Button(root, text='Drukuj', command=self.print_output)
+        self.btn_print.grid(row=15, column=0, padx=10, pady=(0, 12), sticky='w')
+
         # Grid weight to let text expand
         root.grid_rowconfigure(14, weight=1)
         root.grid_columnconfigure(0, weight=1)
@@ -264,6 +271,56 @@ class ProfileCutterApp:
             dv.set('')
             sv.set('')
         self.output.delete('1.0', tk.END)
+
+    def print_output(self):
+        """Drukowanie zawartości pola wyników.
+        Strategia:
+          - Windows: zapis do pliku tymczasowego .txt i os.startfile(path, 'print')
+          - macOS/Linux: wysłanie przez 'lpr' (jeśli dostępne). Jeśli nie działa -> dialog zapisu.
+        """
+        content = self.output.get('1.0', tk.END).strip()
+        if not content:
+            messagebox.showinfo('Brak danych', 'Brak treści do wydruku.')
+            return
+
+        system = platform.system().lower()
+        try:
+            if system.startswith('win'):
+                # Windows
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8') as tf:
+                    tf.write(content)
+                    temp_path = tf.name
+                try:
+                    os.startfile(temp_path, 'print')  # type: ignore[attr-defined]
+                    messagebox.showinfo('Drukowanie', 'Wysłano do drukarki (system Windows).')
+                except Exception as e:
+                    messagebox.showerror('Błąd', f'Nie udało się wydrukować: {e}')
+            else:
+                # macOS / Linux: użyj lpr jeśli dostępne
+                with subprocess.Popen(['which', 'lpr'], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+                    out, _ = proc.communicate(timeout=2)
+                if out.strip():
+                    try:
+                        lp = subprocess.Popen(['lpr'], stdin=subprocess.PIPE)
+                        lp.communicate(input=content.encode('utf-8'), timeout=5)
+                        if lp.returncode == 0:
+                            messagebox.showinfo('Drukowanie', 'Wysłano do drukarki (lpr).')
+                            return
+                    except Exception:
+                        pass
+                # Fallback: zapisz do pliku
+                save_path = filedialog.asksaveasfilename(title='Zapisz do pliku aby wydrukować ręcznie', defaultextension='.txt', filetypes=[('Plik tekstowy', '*.txt'), ('Wszystkie pliki', '*.*')])
+                if save_path:
+                    try:
+                        with open(save_path, 'w', encoding='utf-8') as f:
+                            f.write(content)
+                        messagebox.showinfo('Zapisano', f'Zapisano do: {save_path}\nMożesz wydrukować plik ręcznie.')
+                    except Exception as e:
+                        messagebox.showerror('Błąd', f'Nie udało się zapisać pliku: {e}')
+                else:
+                    messagebox.showinfo('Anulowano', 'Drukowanie anulowane.')
+        except Exception as e:
+            messagebox.showerror('Błąd', f'Problem podczas przygotowania wydruku: {e}')
 
 
 def main():
