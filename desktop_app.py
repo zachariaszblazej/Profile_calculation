@@ -251,9 +251,8 @@ class ProfileCutterApp:
 
     def print_output(self):
         """Po kliknięciu 'Drukuj' na Windows:
-        - Otwórz Notatnik (nowy dokument),
-        - Wklej zawartość outputu,
-        - Otwórz okno drukowania (Ctrl+P).
+        - Otwórz Notatnik (nowy, pusty dokument),
+        - Wklej zawartość outputu do dokumentu.
 
         Na innych systemach: spróbuj 'lpr', w przeciwnym razie zaproponuj zapis do pliku.
         """
@@ -268,29 +267,35 @@ class ProfileCutterApp:
                 try:
                     # Lazy import, aby nie wymagać pywinauto poza Windowsem
                     from pywinauto import Application
-                    from pywinauto.keyboard import send_keys
 
-                    app = Application(backend="uia").start("notepad.exe")
-                    # Poczekaj na okno Notatnika (różne języki: Notepad/Notatnik)
-                    dlg = app.window(title_re=r".*(Notepad|Notatnik).*")
-                    dlg.wait('visible', timeout=10)
+                    def _fill_notepad(backend: str) -> bool:
+                        app = Application(backend=backend).start("notepad.exe")
+                        # Poczekaj na okno Notatnika (różne języki: Notepad/Notatnik)
+                        dlg = app.window(title_re=r".*(Notepad|Notatnik).*")
+                        dlg.wait('visible', timeout=10)
+                        # Znajdź pole edycji i wstaw tekst
+                        try:
+                            editor = dlg.child_window(control_type="Edit").wait('ready', timeout=10).wrapper_object()
+                        except Exception:
+                            # backend win32 używa innego sposobu dostępu
+                            editor = dlg.Edit.wrapper_object()
+                        editor.set_edit_text(content)
+                        return True
 
-                    # Znajdź pole edycji i wstaw tekst
-                    editor = dlg.child_window(control_type="Edit").wait('ready', timeout=10).wrapper_object()
-                    editor.set_edit_text(content)
-
-                    # Otwórz dialog drukowania
-                    dlg.set_focus()
-                    send_keys('^p')
-
-                except Exception as e:
+                    # Spróbuj UIA, potem win32
+                    try:
+                        ok = _fill_notepad("uia")
+                    except Exception:
+                        ok = _fill_notepad("win32")
+                    if ok:
+                        return
+                except Exception:
                     # Jeśli automatyzacja zawiedzie, fallback: otwórz Notatnik z plikiem tymczasowym
                     try:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8') as tf:
                             tf.write(content)
                             temp_path = tf.name
                         subprocess.Popen(["notepad.exe", temp_path])
-                        messagebox.showinfo('Informacja', 'Otworzono Notatnik z treścią. Użyj Ctrl+P, aby drukować.')
                     except Exception as e2:
                         messagebox.showerror('Błąd', f'Nie udało się otworzyć Notatnika: {e2}')
             else:
