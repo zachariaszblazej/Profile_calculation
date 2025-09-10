@@ -273,10 +273,12 @@ class ProfileCutterApp:
         self.output.delete('1.0', tk.END)
 
     def print_output(self):
-        """Drukowanie zawartości pola wyników.
-        Strategia:
-          - Windows: zapis do pliku tymczasowego .txt i os.startfile(path, 'print')
-          - macOS/Linux: wysłanie przez 'lpr' (jeśli dostępne). Jeśli nie działa -> dialog zapisu.
+        """Po kliknięciu 'Drukuj' na Windows:
+        - Otwórz Notatnik (nowy dokument),
+        - Wklej zawartość outputu,
+        - Otwórz okno drukowania (Ctrl+P).
+
+        Na innych systemach: spróbuj 'lpr', w przeciwnym razie zaproponuj zapis do pliku.
         """
         content = self.output.get('1.0', tk.END).strip()
         if not content:
@@ -286,15 +288,34 @@ class ProfileCutterApp:
         system = platform.system().lower()
         try:
             if system.startswith('win'):
-                # Windows
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8') as tf:
-                    tf.write(content)
-                    temp_path = tf.name
                 try:
-                    os.startfile(temp_path, 'print')  # type: ignore[attr-defined]
-                    messagebox.showinfo('Drukowanie', 'Wysłano do drukarki (system Windows).')
+                    # Lazy import, aby nie wymagać pywinauto poza Windowsem
+                    from pywinauto import Application
+                    from pywinauto.keyboard import send_keys
+
+                    app = Application(backend="uia").start("notepad.exe")
+                    # Poczekaj na okno Notatnika (różne języki: Notepad/Notatnik)
+                    dlg = app.window(title_re=r".*(Notepad|Notatnik).*")
+                    dlg.wait('visible', timeout=10)
+
+                    # Znajdź pole edycji i wstaw tekst
+                    editor = dlg.child_window(control_type="Edit").wait('ready', timeout=10).wrapper_object()
+                    editor.set_edit_text(content)
+
+                    # Otwórz dialog drukowania
+                    dlg.set_focus()
+                    send_keys('^p')
+
                 except Exception as e:
-                    messagebox.showerror('Błąd', f'Nie udało się wydrukować: {e}')
+                    # Jeśli automatyzacja zawiedzie, fallback: otwórz Notatnik z plikiem tymczasowym
+                    try:
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8') as tf:
+                            tf.write(content)
+                            temp_path = tf.name
+                        subprocess.Popen(["notepad.exe", temp_path])
+                        messagebox.showinfo('Informacja', 'Otworzono Notatnik z treścią. Użyj Ctrl+P, aby drukować.')
+                    except Exception as e2:
+                        messagebox.showerror('Błąd', f'Nie udało się otworzyć Notatnika: {e2}')
             else:
                 # macOS / Linux: użyj lpr jeśli dostępne
                 with subprocess.Popen(['which', 'lpr'], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
