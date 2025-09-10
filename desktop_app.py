@@ -7,9 +7,6 @@ import platform
 import tempfile
 import subprocess
 
-# Ustal ścieżkę bazową. W trybie PyInstaller (exe) pliki danych znajdują się w katalogu sys._MEIPASS.
-_BASE_PATH = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-BACKGROUND_IMAGE_PATH = os.path.join(_BASE_PATH, 'background_image.jpeg')
 
 
 def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
@@ -124,26 +121,6 @@ class ProfileCutterApp:
     def __init__(self, root):
         self.root = root
         root.title('Tnij profile - aplikacja desktop')
-        # Try to load background image (optional)
-        self._bg_image = None
-        self._bg_orig = None
-        self._bg_label = None
-        if os.path.exists(BACKGROUND_IMAGE_PATH):
-            try:
-                from PIL import Image, ImageTk
-                self._bg_orig = Image.open(BACKGROUND_IMAGE_PATH)
-                self._bg_image = ImageTk.PhotoImage(self._bg_orig)
-                self._bg_label = tk.Label(root, image=self._bg_image)
-                self._bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-                root.bind('<Configure>', self._on_resize_bg)
-            except Exception:
-                try:
-                    # Fallback (works only for GIF/PNG)
-                    self._bg_image = tk.PhotoImage(file=BACKGROUND_IMAGE_PATH)
-                    self._bg_label = tk.Label(root, image=self._bg_image)
-                    self._bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-                except Exception:
-                    pass  # no background
 
         # Input widgets
         pad_y = 2
