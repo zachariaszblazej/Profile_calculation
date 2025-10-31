@@ -265,30 +265,29 @@ class ProfileCutterApp:
         try:
             if system.startswith('win'):
                 try:
-                    # Lazy import, aby nie wymagać pywinauto poza Windowsem
+                    # Szybkie rozwiązanie: użyj schowka + Ctrl+V (działa na Win10 i Win11)
                     from pywinauto import Application
+                    from pywinauto.keyboard import send_keys
+                    import time
 
-                    def _fill_notepad(backend: str) -> bool:
-                        app = Application(backend=backend).start("notepad.exe")
-                        # Poczekaj na okno Notatnika (różne języki: Notepad/Notatnik)
-                        dlg = app.window(title_re=r".*(Notepad|Notatnik).*")
-                        dlg.wait('visible', timeout=10)
-                        # Znajdź pole edycji i wstaw tekst
-                        try:
-                            editor = dlg.child_window(control_type="Edit").wait('ready', timeout=10).wrapper_object()
-                        except Exception:
-                            # backend win32 używa innego sposobu dostępu
-                            editor = dlg.Edit.wrapper_object()
-                        editor.set_edit_text(content)
-                        return True
+                    # Skopiuj zawartość do schowka systemowego
+                    self.root.clipboard_clear()
+                    self.root.clipboard_append(content)
+                    self.root.update()  # flush clipboard
 
-                    # Spróbuj UIA, potem win32
-                    try:
-                        ok = _fill_notepad("uia")
-                    except Exception:
-                        ok = _fill_notepad("win32")
-                    if ok:
-                        return
+                    # Uruchom Notepad JEDEN raz
+                    proc = subprocess.Popen(["notepad.exe"])
+                    time.sleep(0.3)  # krótki delay na start procesu
+
+                    # Znajdź okno Notatnika po klasie (niezależnie od języka i wersji Windows)
+                    app = Application(backend="uia").connect(process=proc.pid, timeout=5)
+                    dlg = app.window(class_name="Notepad")
+                    dlg.wait('visible', timeout=5)
+                    dlg.set_focus()
+
+                    # Wklej z schowka (natychmiastowe)
+                    send_keys('^v')
+                    return
                 except Exception:
                     # Jeśli automatyzacja zawiedzie, fallback: otwórz Notatnik z plikiem tymczasowym
                     try:
