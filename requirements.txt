@@ -2,3 +2,4 @@ Flask
 Gunicorn
 Pillow
 pywinauto
+pywin32
