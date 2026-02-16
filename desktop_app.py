@@ -163,8 +163,8 @@ class ProfileCutterApp:
         self.btn_add_row = ttk.Button(btn_frame, text='+ Dodaj pozycję', command=self.add_row)
         self.btn_add_row.pack(side='left')
 
-        # Dodaj 3 startowe wiersze
-        for _ in range(3):
+        # Dodaj 11 startowych wierszy
+        for _ in range(11):
             self.add_row()
 
         self.btn_cut = ttk.Button(root, text='Tnij profile', command=self.compute)
