@@ -286,6 +286,13 @@ class ProfileCutterApp:
             messagebox.showinfo('Brak', 'Brak danych do obliczeń')
             return
 
+        # Scal duplikaty długości (sumuj ilości) i posortuj malejąco
+        merged = {}
+        for d, s in zip(dlugosci, sztuki):
+            merged[d] = merged.get(d, 0) + s
+        dlugosci = sorted(merged.keys(), reverse=True)
+        sztuki = [merged[d] for d in dlugosci]
+
         # Uwaga: generuj_profile mutuje przekazane listy (usuwa elementy),
         # dlatego przekazujemy kopie aby zachować oryginalne do wyświetlenia w sekcji "Zlecenie".
         profile_dla_dostawcy, profile_dla_firmy = generuj_profile(dlugosci.copy(), sztuki.copy(), profil, profil, zapas)
