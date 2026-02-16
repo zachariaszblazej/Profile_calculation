@@ -314,8 +314,8 @@ class ProfileCutterApp:
 
     def print_output(self):
         """Po kliknięciu 'Drukuj' na Windows:
-        - Otwórz Notatnik (nowy, pusty dokument),
-        - Wklej zawartość outputu do dokumentu.
+        - Otwórz Microsoft Word z nowym dokumentem,
+        - Wklej zawartość outputu do dokumentu (czcionka Consolas 11pt).
 
         Na innych systemach: spróbuj 'lpr', w przeciwnym razie zaproponuj zapis do pliku.
         """
@@ -328,38 +328,36 @@ class ProfileCutterApp:
         try:
             if system.startswith('win'):
                 try:
-                    # Szybkie rozwiązanie: użyj schowka + Ctrl+V (działa na Win10 i Win11)
-                    from pywinauto import Application
-                    from pywinauto.keyboard import send_keys
-                    import time
+                    import win32com.client  # type: ignore
 
-                    # Skopiuj zawartość do schowka systemowego
-                    self.root.clipboard_clear()
-                    self.root.clipboard_append(content)
-                    self.root.update()  # flush clipboard
+                    word = win32com.client.Dispatch("Word.Application")
+                    word.Visible = True
+                    doc = word.Documents.Add()
 
-                    # Uruchom Notepad JEDEN raz
-                    proc = subprocess.Popen(["notepad.exe"])
-                    time.sleep(0.3)  # krótki delay na start procesu
+                    # Ustaw czcionkę monospace dla czytelności
+                    rng = doc.Range()
+                    rng.Font.Name = "Consolas"
+                    rng.Font.Size = 11
 
-                    # Znajdź okno Notatnika po klasie (niezależnie od języka i wersji Windows)
-                    app = Application(backend="uia").connect(process=proc.pid, timeout=5)
-                    dlg = app.window(class_name="Notepad")
-                    dlg.wait('visible', timeout=5)
-                    dlg.set_focus()
+                    # Wstaw tekst
+                    rng.Text = content
 
-                    # Wklej z schowka (natychmiastowe)
-                    send_keys('^v')
+                    # Przesuń kursor na początek dokumentu
+                    word.Selection.HomeKey(6)  # wdStory = 6
+
                     return
-                except Exception:
-                    # Jeśli automatyzacja zawiedzie, fallback: otwórz Notatnik z plikiem tymczasowym
+                except Exception as e:
+                    # Fallback: zapisz do pliku .docx lub .txt i otwórz
                     try:
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.txt', mode='w', encoding='utf-8') as tf:
                             tf.write(content)
                             temp_path = tf.name
-                        subprocess.Popen(["notepad.exe", temp_path])
+                        os.startfile(temp_path)  # type: ignore[attr-defined]
+                        messagebox.showinfo('Informacja',
+                                            f'Nie udało się otworzyć Worda ({e}).\n'
+                                            f'Otworzono plik tymczasowy w domyślnej aplikacji.')
                     except Exception as e2:
-                        messagebox.showerror('Błąd', f'Nie udało się otworzyć Notatnika: {e2}')
+                        messagebox.showerror('Błąd', f'Nie udało się otworzyć pliku: {e2}')
             else:
                 # macOS / Linux: użyj lpr jeśli dostępne
                 with subprocess.Popen(['which', 'lpr'], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
