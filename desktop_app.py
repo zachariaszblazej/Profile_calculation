@@ -134,33 +134,54 @@ class ProfileCutterApp:
         self.zapas_entry = ttk.Entry(root, textvariable=self.zapas_var, width=8)
         self.zapas_entry.grid(row=0, column=3, sticky='w', pady=pad_y)
 
-        self.dlugosci_vars = []
-        self.sztuki_vars = []
-        for i in range(11):
-            r = i + 1
-            ttk.Label(root, text=f'Długość {r} [mm]:').grid(row=r, column=0, sticky='w', padx=10, pady=pad_y)
-            dv = tk.StringVar()
-            sv = tk.StringVar()
-            self.dlugosci_vars.append(dv)
-            self.sztuki_vars.append(sv)
-            ttk.Entry(root, textvariable=dv, width=8).grid(row=r, column=1, sticky='w', pady=pad_y)
-            ttk.Label(root, text='Ilość:').grid(row=r, column=2, sticky='w', pady=pad_y)
-            ttk.Entry(root, textvariable=sv, width=6).grid(row=r, column=3, sticky='w', pady=pad_y)
+        # --- Dynamiczna lista pozycji (długość + ilość) ---
+        self.rows = []  # lista dict: {'frame', 'dv', 'sv', 'widgets'}
+
+        # Kontener ze scrollem na wiersze pozycji
+        self.rows_canvas = tk.Canvas(root, highlightthickness=0, height=200)
+        self.rows_scrollbar = ttk.Scrollbar(root, orient='vertical', command=self.rows_canvas.yview)
+        self.rows_inner = ttk.Frame(self.rows_canvas)
+
+        self.rows_inner.bind('<Configure>', lambda e: self.rows_canvas.configure(scrollregion=self.rows_canvas.bbox('all')))
+        self.rows_canvas_window = self.rows_canvas.create_window((0, 0), window=self.rows_inner, anchor='nw')
+        self.rows_canvas.configure(yscrollcommand=self.rows_scrollbar.set)
+
+        self.rows_canvas.grid(row=1, column=0, columnspan=4, sticky='nsew', padx=10, pady=pad_y)
+        self.rows_scrollbar.grid(row=1, column=4, sticky='ns', pady=pad_y)
+
+        # Scroll myszką
+        def _on_mousewheel(event):
+            self.rows_canvas.yview_scroll(int(-1 * (event.delta / 120)), 'units')
+        self.rows_canvas.bind_all('<MouseWheel>', _on_mousewheel)
+
+        # Rozciągnij canvas gdy okno się poszerzy
+        self.rows_canvas.bind('<Configure>', lambda e: self.rows_canvas.itemconfig(self.rows_canvas_window, width=e.width))
+
+        # Przycisk „+" do dodawania pozycji
+        btn_frame = ttk.Frame(root)
+        btn_frame.grid(row=2, column=0, columnspan=4, sticky='w', padx=10, pady=(2, 4))
+        self.btn_add_row = ttk.Button(btn_frame, text='+ Dodaj pozycję', command=self.add_row)
+        self.btn_add_row.pack(side='left')
+
+        # Dodaj 3 startowe wiersze
+        for _ in range(3):
+            self.add_row()
 
         self.btn_cut = ttk.Button(root, text='Tnij profile', command=self.compute)
-        self.btn_cut.grid(row=13, column=0, padx=10, pady=(10, 4), sticky='w')
+        self.btn_cut.grid(row=3, column=0, padx=10, pady=(10, 4), sticky='w')
         self.btn_clear = ttk.Button(root, text='Wyczyść', command=self.clear)
-        self.btn_clear.grid(row=13, column=1, padx=10, pady=(10, 4), sticky='w')
+        self.btn_clear.grid(row=3, column=1, padx=10, pady=(10, 4), sticky='w')
 
         self.output = ScrolledText(root, width=70, height=18)
-        self.output.grid(row=14, column=0, columnspan=4, padx=10, pady=(10, 10), sticky='nsew')
+        self.output.grid(row=4, column=0, columnspan=5, padx=10, pady=(10, 10), sticky='nsew')
 
         # Przyciski pod outputem
         self.btn_print = ttk.Button(root, text='Drukuj', command=self.print_output)
-        self.btn_print.grid(row=15, column=0, padx=10, pady=(0, 12), sticky='w')
+        self.btn_print.grid(row=5, column=0, padx=10, pady=(0, 12), sticky='w')
 
         # Grid weight to let text expand
-        root.grid_rowconfigure(14, weight=1)
+        root.grid_rowconfigure(1, weight=0)
+        root.grid_rowconfigure(4, weight=1)
         root.grid_columnconfigure(0, weight=1)
         root.grid_columnconfigure(1, weight=1)
         root.grid_columnconfigure(2, weight=1)
@@ -175,6 +196,47 @@ class ProfileCutterApp:
 
     # Bind background resize only
     # (already bound in background loading if Pillow succeeded)
+
+    def add_row(self):
+        """Dodaje nowy wiersz (Długość + Ilość + przycisk −) do listy pozycji."""
+        idx = len(self.rows) + 1
+        row_frame = ttk.Frame(self.rows_inner)
+        row_frame.pack(fill='x', pady=1)
+
+        lbl = ttk.Label(row_frame, text=f'Długość {idx} [mm]:')
+        lbl.pack(side='left', padx=(0, 4))
+
+        dv = tk.StringVar()
+        e_d = ttk.Entry(row_frame, textvariable=dv, width=8)
+        e_d.pack(side='left', padx=(0, 8))
+
+        lbl2 = ttk.Label(row_frame, text='Ilość:')
+        lbl2.pack(side='left', padx=(0, 4))
+
+        sv = tk.StringVar()
+        e_s = ttk.Entry(row_frame, textvariable=sv, width=6)
+        e_s.pack(side='left', padx=(0, 8))
+
+        row_data = {'frame': row_frame, 'dv': dv, 'sv': sv, 'lbl': lbl}
+
+        btn_remove = ttk.Button(row_frame, text='−', width=3,
+                                command=lambda rd=row_data: self.remove_row(rd))
+        btn_remove.pack(side='left', padx=(4, 0))
+        row_data['btn_remove'] = btn_remove
+
+        self.rows.append(row_data)
+        # Przewiń na dół po dodaniu
+        self.rows_canvas.update_idletasks()
+        self.rows_canvas.yview_moveto(1.0)
+
+    def remove_row(self, row_data):
+        """Usuwa wiersz pozycji z listy."""
+        if row_data in self.rows:
+            self.rows.remove(row_data)
+            row_data['frame'].destroy()
+            # Przenumeruj etykiety
+            for i, rd in enumerate(self.rows, start=1):
+                rd['lbl'].configure(text=f'Długość {i} [mm]:')
 
     def _on_resize_bg(self, event):
         if not self._bg_orig:
@@ -207,9 +269,9 @@ class ProfileCutterApp:
 
         dlugosci = []
         sztuki = []
-        for dv, sv in zip(self.dlugosci_vars, self.sztuki_vars):
-            d = dv.get().strip()
-            s = sv.get().strip()
+        for rd in self.rows:
+            d = rd['dv'].get().strip()
+            s = rd['sv'].get().strip()
             if d != '' and s != '':
                 try:
                     di = int(d)
@@ -244,9 +306,10 @@ class ProfileCutterApp:
 
     def clear(self):
         self.profil_var.set('6000')
-        for dv, sv in zip(self.dlugosci_vars, self.sztuki_vars):
-            dv.set('')
-            sv.set('')
+        self.zapas_var.set('0')
+        for rd in self.rows:
+            rd['dv'].set('')
+            rd['sv'].set('')
         self.output.delete('1.0', tk.END)
 
     def print_output(self):
