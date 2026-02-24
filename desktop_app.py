@@ -55,7 +55,7 @@ def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
                 while obcinane > PROFIL:
                     obcinane -= segment
 
-                ilosc_ciecia = obcinane // segment
+                ilosc_ciecia = int(obcinane // segment)
                 ilosc_sztuk -= ilosc_ciecia
 
                 schemat_pociecia = [segment for x in range(ilosc_ciecia)]
@@ -274,7 +274,7 @@ class ProfileCutterApp:
             s = rd['sv'].get().strip()
             if d != '' and s != '':
                 try:
-                    di = int(d)
+                    di = float(d.replace(',', '.'))
                     si = int(s)
                 except ValueError:
                     messagebox.showerror('Błąd', f'Niepoprawne dane: {d} / {s}')
