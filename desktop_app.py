@@ -6,6 +6,7 @@ import sys
 import platform
 import tempfile
 import subprocess
+from decimal import Decimal
 
 
 
@@ -42,7 +43,7 @@ def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
 
                     while segment <= optymalna_reszta and ilosc_sztuk > 0:
                         do_obciecia -= segment
-                        optymalna_reszta -= segment
+                        optymalna_reszta = optymalna_reszta - segment
                         modyfikowany_profil = pociete_segmenty[index_opt_reszty]
                         modyfikowany_profil['segmenty'].append(segment)
                         modyfikowany_profil['reszta'] = optymalna_reszta
@@ -78,11 +79,11 @@ def generuj_profile(dlugosci, sztuki, PROFIL=6000, GRANICA=6000, ZAPAS=0):
                segment_do_transferu = max(dlugosci_mozliwe_do_transferu)
 
                p['segmenty'].append(segment_do_transferu)
-               p['reszta'] -= segment_do_transferu
+               p['reszta'] = p['reszta'] - segment_do_transferu
                p['segmenty'].sort(reverse=True)
 
                ostatni_profil['segmenty'].remove(segment_do_transferu)
-               ostatni_profil['reszta'] += segment_do_transferu
+               ostatni_profil['reszta'] = ostatni_profil['reszta'] + segment_do_transferu
 
     calkowite_profile = []
     for p in pociete_segmenty:
@@ -256,13 +257,13 @@ class ProfileCutterApp:
 
     def compute(self):
         try:
-            profil = int(self.profil_var.get())
+            profil = Decimal(self.profil_var.get().replace(',', '.'))
         except Exception:
             messagebox.showerror('Błąd', 'Niepoprawna wartość pola Nowy profil')
             return
 
         try:
-            zapas = int(self.zapas_var.get())
+            zapas = Decimal(self.zapas_var.get().replace(',', '.'))
         except Exception:
             messagebox.showerror('Błąd', 'Niepoprawna wartość pola Zapas')
             return
@@ -274,7 +275,7 @@ class ProfileCutterApp:
             s = rd['sv'].get().strip()
             if d != '' and s != '':
                 try:
-                    di = float(d.replace(',', '.'))
+                    di = Decimal(d.replace(',', '.'))
                     si = int(s)
                 except ValueError:
                     messagebox.showerror('Błąd', f'Niepoprawne dane: {d} / {s}')
